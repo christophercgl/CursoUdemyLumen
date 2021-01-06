@@ -1,0 +1,167 @@
+-------------- Curso Lumen ----------------------
+
+ ->	Criar projeto com lumem
+ 	-	composer create-project laravel/lumen lumen-curso
+
+ ->  Iniciar o servidor
+ 	-	entra no projeto/ php -S localhost:8000 -t public
+
+ ->	Configurações
+ 	-	Todas as opções de configurações do porjeto, ficam no .env na raiz;
+
+ 	-	Após criar o projeto, ir no .env e inserir as configs:
+ 		-	No " APP_KEY= " por uma string com 32 caracter. Se n configurar tem uma falha de segurança na transição dos dados.
+ 			-	Criar uma hash md5 online https://www.md5hashgenerator.com/
+ 				Your Hash: 0be475e554f1295aefccd5b66b3105c8
+				Your String: appkey_lumen
+
+		-	Configurar o Banco:
+			-	Criar o banco primeiro para depois alterar a porta, host, username, password e tals.
+			******* Não pode usar o root como USER, tem que criar um novo usuario e dar privilegios root
+
+	-	Ativar o eloquent e facades (/bootstrap/app.php) -> Aqui ativa as ferramentas que quiser usar do lumen
+		- Tirar o comentario $app->withFacades(); (O Facade é um padrão de projeto estrutural que fornece uma interface simplificada (mas limitada) para um sistema complexo de classes, biblioteca, ou framework.)
+		- Tirar o comentario $app->withEloquent();
+
+	-	Criar migration (Simplificando, a migration do Laravel é uma forma que permite a você criar uma tabela em seu banco de dados, sem realmente ir para o gerenciador de banco de dados como phpmyadmin ou sql lite ou qualquer que seja o seu gerenciador) (quanto cria pelo migration, tem tipo um controle de versão do banco)
+		-	php artisan make:migration create_usuarios_table (criar uma migratio p/ tabela de usuario)
+			*	As migrations tem um timmes_temp no name, para o framework saber a ordem delas.
+			*	As migrations ficam em /database/migrations
+		-	Modificar os atribultos da migration para completar a tabela (por os campos da tabela q quero no Schema::create)
+		- Salvar e rodar o comando para atualizar a migration no terminal:
+			-	php artisan migrate
+
+->	Implementar o model da tabela 
+	-	copia de /App/ -> Cria um novo arquivo com o nome da tabe pra cata tabela (Usa de ex o User.php)
+
+->	Criar Rota
+	-	/routes/web.php
+
+-> Criar Controller
+	-	/app/Http/Controllers -> Cria um novo arquivo pra cada classe (usuario, vendedor, compra) (Usa ex o ExampleController.php)
+
+-> JWT - Json Web Token / instalação 
+	-	composer require tymon/jwt-auth:dev-develop --prefer-source
+	-	/app/Providers/AppServiceProvider.php
+	-	/app/vendor/laravel/lumen-framework/config/auth.php // dizer qual driver vai usar (providers, guards)
+	-	/app/Providers/AuthServiceProvider.php
+	-	/app/bootstrap/app.php
+	-	/app/Usuario.php (implements JWTSubject)
+
+-> Validação JWT
+	-	/app/Http/Controllers/UsuarioController.php
+	-	/app/routes/web.php // criar rota para fazer o login
+
+-> Criar secret JWT para usar na validação dos token
+	-	php artisan jwt:secret  // cria token automatico no .env (JWT_SECRET)
+	-	no login retorna um token, se quiser ver as informações q vem no token pode acessar: https://jwt.io/ e colocar o token
+	-	Adicionar mais dados (informações) no token usa função (claims) // não é bom colocar informações criticas no token, pq qualquer um pode ver no site.
+		-	/app/Http/Controllers/UsuarioController.php
+
+-> Validação do Token faz no app/Http/Middleware/Authenticate.php
+	-	para funcionar o middleware, descomentar em bootstrap/app.php "routeMiddleware"
+	-	adicionar na construct da controller UsuarioController.php a chamada do middleware
+
+-> Corrigir erro der Cors (erro de comunicação dos servidores, solicitação <-> resposta)
+	-	Criar novo arquivo CorsMiddleware.php em app/Http/Middleware/
+	- 	Copia o ExampleMiddleware e altera
+	-	Descomenta em bootstrap/app.php "$app->middleware" e altera a class para a q criou acima
+
+-------------- Mysql -------------------
+
+->	sudo apt-get install mysql-server (https://linux4one.com/how-to-install-mysql-on-linux-mint-19)
+
+-> Acessar:
+
+	sudo mysql -h localhost -u root -p
+
+	mysql      -- evocamos o servidor
+	-h         -- dizemos que o próximo dado é referente ao host
+	localhost  -- informamos o o host
+	-u         -- dizemos que o próximo dado é referente ao usuário
+	root       -- informamos o usuário
+	-p         -- dizemos que o próximo dado é referente a senha
+
+->	Ver qual porta está usando
+	-	mysql> SHOW GLOBAL VARIABLES LIKE 'PORT';
+
+->	Caso root não tem senha - Cria senha
+	-	 ALTER USER 'root'@'localhost' IDENTIFIED BY 'T&le6588New';
+	-	 ALTER USER 'gaspar'@'localhost' IDENTIFIED BY 'T&le6588New';
+
+->	Criar novo USER
+	-	CREATE USER 'gaspar'@'localhost' IDENTIFIED BY 'T&le6588New';
+	-	Ver tamanho minimo q tem q ser a senha
+		-	SHOW VARIABLES LIKE 'validate_password%';
+	-	GRANT ALL PRIVILEGES ON * . * TO 'novousuario'@'localhost';
+	-	FLUSH PRIVILEGES; // atualizar
+
+
+->	Criar database
+	-	CREATE DATABASE curso_lumen;
+
+->	Acessar o database
+	-	USE curso_lumen;
+
+->	Criar tabela
+	-	CREATE TABLE usuarios (id int(10) auto_increment, usuario varchar(40), email varchar(50), password varchar(20), verificado boolean, PRIMARY KEY(id));
+
+->	Listar campos \d
+	-	SHOW COLUMNS FROM usuarios;
+
+->	Alterar campo da tabela
+	-	ALTER TABLE usuarios ADD updated_at TIMESTAMP; / no update pode por CURRENT_TIMESTAMP
+	-	ALTER TABLE usuarios ADD created_at TIMESTAMP;
+	-	ALTER TABLE usuario MODIFY COLUMN updated_at TIMESTAMP; // modificar já existente
+
+
+
+============================================================
+
+->	O Model é onde coloca os campos que vai pegar do banco.
+->	A rota é onde recebe a requisição e diz o que vai fazer (chama a controller)
+->	A Controller é onde faz consultas e popula o banco
+
+
+
+*********************************** Lembretes 
+
+Função estática:
+
+Usa uma função estática quando você quer acessar ela diretamente sem precisar criar o objeto, exemplo, tenho uma classe que conta a quantidade de produtos dentro de um banco de dados, vou te mostrar das duas formas, estática e não estática.
+
+Maneira não estática:
+
+class Produto{
+
+  public function getQuantidadeProdutos(){
+    //Código para acessar o banco de dados
+  }
+
+}
+E caso eu quisesse chamar esse método dessa maneira, eu fazeria assim
+
+$meuProduto = new Produto();
+$quantidade = $meuProduto->getQuantidadeProdut();
+
+
+Na maneira estática você acessa o seu método diretamente, então digamos que minha classe está assim:
+
+class Produto{
+
+  public static function getQuantidadeProdutos(){
+    //Código para acessar o banco de dados
+  }
+
+}
+
+eu conseguiria a quantidade de produtos, simplesmente assim:
+
+$quantidade = Produto::getQuantidadeProdutos();
+Muito mais simples né?
+
+Já o comando Self, é o irmão do comado $this. ele na PRÁTICA faz a mesma coisa do que o $this. ele é usado, pois dentro de métodos estáticos você não pode usar o $this. então é por isso que ele usa o self nesse caso.
+
+Já sobre a sua dúvida entre publica e estática. É Simples, eles são coisas diferentes, e podem estar juntos. eu posso tanto ter uma função publica e estática, quanto uma função privada e estática, então não existe restrição em relação a isto.
+
+=====================================
